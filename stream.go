@@ -139,20 +139,169 @@ func needed(a int) int {
 	return n
 }
 
-func (s *OutStream) encodeValues(size uint32, values interface{}) {
+func arraySize(data interface{}) int {
+	switch data := data.(type) {
+	case []uint8:
+		return len(data)
+	case []uint16:
+		return len(data)
+	case []uint32:
+		return len(data)
+	case []float32:
+		return len(data)
+	}
+	return 0
+}
 
+func arrayGet(data interface{}, i int) int {
+	switch data := data.(type) {
+	case []uint8:
+		return int(data[i])
+	case []uint16:
+		return int(data[i])
+	case []uint32:
+		return int(data[i])
+	case []float32:
+		return int(data[i])
+	}
+	return 0
+}
+
+func sliceGet(data interface{}, i int) interface{} {
+	switch data := data.(type) {
+	case []uint8:
+		return data[i:]
+	case []uint16:
+		return data[i:]
+	case []uint32:
+		return data[i:]
+	case []float32:
+		return data[i:]
+	}
+	return 0
+}
+
+func abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+	return a
+}
+
+func ilog2(p int) int {
+	k := 0
+	for ; p > 0; p >>= 1 {
+		k++
+	}
+	return k
+}
+
+func (s *OutStream) encodeValues(size uint32, values interface{}) {
+	si := int(size)
+	bitstream := NewBitStream(&si)
+	N := arraySize(values)
+
+	clogs := make([][]byte, N)
+
+	for c := 0; c < N; c++ {
+		logs := clogs[c]
+		logs = make([]byte, size)
+		for i := 0; i < int(size); i++ {
+			val := arrayGet(values, i*N+c)
+
+			if val == 0 {
+				logs[i] = 0
+				continue
+			}
+			ret := ilog2(abs(val)) + 1 //0 -> 0, [1,-1] -> 1 [-2,-3,2,3] -> 2
+			logs[i] = byte(ret)
+			middle := (1 << ret) >> 1
+			if val < 0 {
+				val = -val - middle
+			}
+			bitstream.write(uint32(val), ret)
+		}
+	}
+
+	s.write(bitstream)
+	for c := 0; c < N; c++ {
+		s.compress(uint32(len(clogs[c])), clogs[c])
+	}
 }
 
 func (s *OutStream) encodeArray(size uint32, values interface{}) {
+	si := int(size)
+	bitstream := NewBitStream(&si)
+	logs := make([]byte, si)
+	N := arraySize(values)
 
+	for i := 0; i < int(size); i++ {
+		p := sliceGet(values, i*N)
+		diff := needed(arrayGet(p, 0))
+		for c := 1; c < N; c++ {
+			d := needed(arrayGet(p, c))
+			if diff < d {
+				diff = d
+			}
+		}
+
+		logs[i] = byte(diff)
+		if diff == 0 {
+			continue
+		}
+
+		max := 1 << (diff - 1)
+		for c := 0; c < N; c++ {
+			bitstream.write(uint32(arrayGet(p, c)+max), diff)
+		}
+	}
+
+	s.write(bitstream)
+	s.compress(uint32(len(logs)), logs)
 }
 
 func (s *OutStream) encodeDiffs(size uint32, values interface{}) {
+	si := int(size)
+	bitstream := NewBitStream(&si)
+	logs := make([]byte, si)
 
+	for i := 0; i < int(size); i++ {
+		val := arrayGet(values, i)
+		if val == 0 {
+			logs[i] = 0
+			continue
+		}
+		ret := ilog2(abs(val)) + 1 //0 -> 0, [1,-1] -> 1 [-2,-3,2,3] -> 2
+		logs[i] = byte(ret)
+
+		middle := (1 << ret) >> 1
+		if val < 0 {
+			val = -val - middle
+		}
+		bitstream.write(uint32(val), ret)
+	}
+	s.write(bitstream)
+	s.compress(uint32(len(logs)), logs)
 }
 
 func (s *OutStream) encodeIndices(size uint32, values interface{}) {
+	si := int(size)
+	bitstream := NewBitStream(&si)
+	logs := make([]byte, si)
 
+	for i := 0; i < int(size); i++ {
+		val := arrayGet(values, i) + 1
+		if val == 1 {
+			logs[i] = 0
+			continue
+		}
+		t := ilog2(val)
+		ret := t
+		logs[i] = byte(t)
+		bitstream.write(uint32(val-(1<<ret)), ret)
+	}
+	s.write(bitstream)
+	s.compress(uint32(len(logs)), logs)
 }
 
 type InStream struct {

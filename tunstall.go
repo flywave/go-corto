@@ -29,17 +29,18 @@ type TSymbol struct {
 type Symbols []Symbol
 
 func (p Symbols) Len() int { return len(p) }
+
 func (p Symbols) Less(i, j int) bool {
 	return p[i].probability > p[j].probability
 }
+
 func (p Symbols) Swap(i, j int) { p[i], p[j] = p[j], p[i] }
 
 func (p Symbols) Data() []byte {
 	ret := make([]byte, len(p)*2)
 	writer := bytes.NewBuffer(ret)
 	for i := range p {
-		binary.Write(writer, byteorder, p[i].symbol)
-		binary.Write(writer, byteorder, p[i].probability)
+		binary.Write(writer, byteorder, p[i])
 	}
 	return writer.Bytes()
 }
