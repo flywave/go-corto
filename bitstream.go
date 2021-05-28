@@ -36,6 +36,11 @@ func NewBitStreamWithBuf(size int, buffer []uint32) *BitStream {
 	return s
 }
 
+func (s *BitStream) init(size int, buffer []uint32) {
+	s.size = size
+	s.buffer = buffer
+}
+
 func (s *BitStream) reserve(reserved int) {
 	s.allocated = reserved
 	s.buffer = make([]uint32, s.allocated)

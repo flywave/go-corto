@@ -167,6 +167,18 @@ func arrayGet(data interface{}, i int) int {
 	return 0
 }
 
+func arraySet(data interface{}, i int, v int) {
+	switch data := data.(type) {
+	case []uint8:
+		data[i] = uint8(v)
+	case []uint16:
+		data[i] = uint16(v)
+	case []uint32:
+		data[i] = uint32(v)
+	case []float32:
+		data[i] = float32(v)
+	}
+}
 func sliceGet(data interface{}, i int) interface{} {
 	switch data := data.(type) {
 	case []uint8:
@@ -310,56 +322,221 @@ type InStream struct {
 	pos    int
 }
 
-func (s *InStream) decompress(data []byte) {}
-
-func (s *InStream) tunstall_decompress(data []byte) []byte {
+func (s *InStream) decompress() []byte {
+	switch s.Entropy {
+	case ENTROPY_NONE:
+		size := s.readUint32()
+		data := make([]byte, size)
+		data = s.readArray(data).([]byte)
+		return data
+	case ENTROPY_TUNSTALL:
+		data := s.tunstall_decompress()
+		return data
+	}
 	return nil
+}
+
+func (s *InStream) tunstall_decompress() []byte {
+	var t Tunstall
+	nsymbols := int(s.readUint8())
+	data := make([]byte, nsymbols*2)
+	data = s.readArray(data).([]byte)
+	t.probabilities = make([]Symbol, nsymbols)
+
+	t.probabilities.SetData(data)
+
+	t.createDecodingTables2()
+
+	size := int(s.readUint32())
+	data = make([]byte, size)
+	compressed_size := int(s.readUint32())
+	compressed_data := make([]byte, compressed_size)
+	compressed_data = s.readArray(compressed_data).([]byte)
+
+	if size > 0 {
+		data = t.decompress(compressed_data, data, size)
+	}
+	return data
 }
 
 func (s *InStream) rewind() {
-
+	s.pos = 0
 }
 
 func (s *InStream) readArray(t interface{}) interface{} {
-	return nil
+	reader := bytes.NewBuffer(s.buffer[s.pos:])
+	binary.Read(reader, byteorder, t)
+	s.pos += binary.Size(t)
+	return t
 }
 
 func (s *InStream) readUint8() uint8 {
-	return 0
+	r := s.buffer[s.pos]
+	s.pos++
+	return uint8(r)
 }
 
-func (s *InStream) readUint16() uint16 {
-	return 0
+func (s *InStream) readUint16() (t uint16) {
+	reader := bytes.NewBuffer(s.buffer[s.pos:])
+	binary.Read(reader, byteorder, &t)
+	s.pos += 2
+	return
 }
 
-func (s *InStream) readUint32() uint32 {
-	return 0
+func (s *InStream) readUint32() (t uint32) {
+	reader := bytes.NewBuffer(s.buffer[s.pos:])
+	binary.Read(reader, byteorder, &t)
+	s.pos += 4
+	return
 }
 
-func (s *InStream) readFloat() float32 {
-	return 0
+func (s *InStream) readFloat() (t float32) {
+	reader := bytes.NewBuffer(s.buffer[s.pos:])
+	binary.Read(reader, byteorder, &t)
+	s.pos += 4
+	return
 }
 
 func (s *InStream) readString() string {
-	return ""
+	bytes := s.readUint16()
+	str := make([]byte, bytes)
+	str = s.readArray(str).([]byte)
+	return string(str)
 }
 
 func (s *InStream) read(stream *BitStream) {
+	si := int(s.readUint32())
 
+	pad := (s.pos - len(s.buffer)) & 0x3
+	if pad != 0 {
+		s.pos += 4 - pad
+	}
+	buf := make([]uint32, si)
+	reader := bytes.NewBuffer(s.buffer[s.pos:])
+	binary.Read(reader, byteorder, buf)
+	stream.init(si, buf)
+	s.pos += si * 4
 }
 
 func (s *InStream) decodeValues(values interface{}) int {
-	return 0
+	bitstream := NewBitStream(nil)
+	s.read(bitstream)
+	N := arraySize(values)
+
+	var logs []byte
+
+	for c := 0; c < N; c++ {
+		logs = s.decompress()
+		if values == nil {
+			continue
+		}
+
+		for i := 0; i < len(logs); i++ {
+			diff := logs[i]
+			if diff == 0 {
+				arraySet(values, i*N+c, 0)
+				continue
+			}
+
+			val := int(bitstream.read(int(diff)))
+			middle := int(1 << (diff - 1))
+			if val < middle {
+				val = -val - middle
+			}
+			arraySet(values, i*N+c, val)
+		}
+	}
+	return len(logs)
 }
 
 func (s *InStream) decodeArray(values interface{}) int {
-	return 0
+	bitstream := NewBitStream(nil)
+	s.read(bitstream)
+	N := arraySize(values)
+
+	var logs []byte
+	logs = s.decompress()
+
+	if values == nil {
+		return len(logs)
+	}
+
+	for i := 0; i < len(logs); i++ {
+		p := sliceGet(values, i*N)
+
+		diff := logs[i]
+		if diff == 0 {
+			for c := 0; c < N; c++ {
+				arraySet(p, c, 0)
+			}
+			continue
+		}
+		max := (1 << diff) >> 1
+		if false && diff < 22 {
+			mask := (1 << diff) - 1
+			bits := bitstream.read(N * int(diff))
+			for c := N - 1; c > 0; c-- {
+				arraySet(p, c, ((int(bits) & mask) - max))
+				bits >>= diff
+			}
+			arraySet(p, 0, (int(bits) - max))
+		} else {
+			for c := 0; c < N; c++ {
+				arraySet(p, c, (int(bitstream.read(int(diff))) - max))
+			}
+		}
+	}
+	return len(logs)
 }
 
 func (s *InStream) decodeIndices(values interface{}) int {
-	return 0
+	bitstream := NewBitStream(nil)
+	s.read(bitstream)
+
+	var logs []byte
+	logs = s.decompress()
+
+	if values == nil {
+		return len(logs)
+	}
+
+	for i := 0; i < len(logs); i++ {
+		ret := logs[i]
+		if ret == 0 {
+			arraySet(values, i, 0)
+			continue
+		}
+		arraySet(values, i, int((1<<int(ret))+bitstream.read(int(ret))-1))
+	}
+	return len(logs)
 }
 
 func (s *InStream) decodeDiffs(values interface{}) int {
-	return 0
+	bitstream := NewBitStream(nil)
+	s.read(bitstream)
+
+	var logs []byte
+	logs = s.decompress()
+
+	if values == nil {
+		return len(logs)
+	}
+
+	for i := 0; i < len(logs); i++ {
+
+		diff := logs[i]
+
+		if diff == 0 {
+			arraySet(values, i, 0)
+			continue
+		}
+
+		val := int(bitstream.read(int(diff)))
+		middle := 1 << (diff - 1)
+		if val < middle {
+			val = -val - middle
+		}
+		arraySet(values, i, val)
+	}
+	return len(logs)
 }

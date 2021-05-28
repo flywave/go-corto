@@ -45,6 +45,13 @@ func (p Symbols) Data() []byte {
 	return writer.Bytes()
 }
 
+func (p Symbols) SetData(b []byte) {
+	reader := bytes.NewBuffer(b)
+	for i := range p {
+		binary.Read(reader, byteorder, p[i])
+	}
+}
+
 type Tunstall struct {
 	wordsize       int
 	dictionarysize int
@@ -441,7 +448,7 @@ func (t *Tunstall) compress(data []byte, input_size int) (output []byte, output_
 	return
 }
 
-func (t *Tunstall) decompressWithSize(data []byte, output []byte, output_size int) []byte {
+func (t *Tunstall) decompress(data []byte, output []byte, output_size int) []byte {
 	end_output := output_size
 	end_data := len(data) - 1
 
