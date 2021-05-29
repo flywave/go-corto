@@ -31,7 +31,7 @@ func NewBitStream(reserved *int) *BitStream {
 	return s
 }
 
-func NewBitStreamWithBuf(size int, buffer []uint32) *BitStream {
+func NewBitStreamWithBuffer(size int, buffer []uint32) *BitStream {
 	s := &BitStream{size: size, buffer: buffer, pos: 0, buff: 0, bits: 0}
 	return s
 }
@@ -80,7 +80,6 @@ func (s *BitStream) read(numbits int) uint32 {
 		result |= (s.buff >> s.bits)
 		s.buff = (s.buff & ((1 << s.bits) - 1))
 		return result
-
 	} else {
 		s.bits -= numbits
 		result := (s.buff >> s.bits)
