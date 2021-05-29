@@ -2,4 +2,4 @@ module github.com/flywave/go-corto
 
 go 1.13
 
-require github.com/flywave/go3d v0.0.0-20210521003526-9185b600148d // indirect
+require github.com/flywave/go3d v0.0.0-20210529142521-14eb5aca1290 // indirect

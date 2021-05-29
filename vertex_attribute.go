@@ -39,6 +39,10 @@ type VertexAttribute interface {
 	DeltaDecode(nvert uint32, faces []Face)
 	PostDelta(nvert uint32, nface uint32, attrs map[string]VertexAttribute, index *IndexAttribute)
 	Dequantize(nvert uint32)
+	Q() float32
+	Dim() byte
+	Format() byte
+	Strategy() byte
 }
 
 type GenericAttr struct {
@@ -54,6 +58,26 @@ type GenericAttr struct {
 
 	values interface{}
 	diffs  interface{}
+}
+
+func NewGenericAttr(dim int, values interface{}, diffs interface{}) *GenericAttr {
+	return &GenericAttr{N: dim, values: values, diffs: diffs}
+}
+
+func (a *GenericAttr) Q() float32 {
+	return a.q
+}
+
+func (a *GenericAttr) Dim() byte {
+	return byte(a.N)
+}
+
+func (a *GenericAttr) Format() byte {
+	return byte(a.format)
+}
+
+func (a *GenericAttr) Strategy() byte {
+	return byte(a.strategy)
 }
 
 func (a *GenericAttr) Codec() CodecType {

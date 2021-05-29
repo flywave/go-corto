@@ -47,6 +47,22 @@ func (a *NormalAttr) Codec() CodecType {
 	return NORMAL_CODEC
 }
 
+func (a *NormalAttr) Q() float32 {
+	return a.q
+}
+
+func (a *NormalAttr) Dim() byte {
+	return byte(a.N)
+}
+
+func (a *NormalAttr) Format() byte {
+	return byte(a.format)
+}
+
+func (a *NormalAttr) Strategy() byte {
+	return byte(a.strategy)
+}
+
 func markBoundary(nvert uint32, nface uint32, index interface{}) (boundary []int32) {
 	boundary = make([]int32, nvert)
 

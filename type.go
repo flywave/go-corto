@@ -94,3 +94,8 @@ func (b *Color4b) toYCC() Color4b {
 func (b *Color4b) toRGB() Color4b {
 	return Color4b{byte(b[2] + b[0]), b[0], byte(b[1] + b[0]), b[3]}
 }
+
+func NewBool(b bool) *bool       { return &b }
+func NewInt(n int) *int          { return &n }
+func NewInt64(n int64) *int64    { return &n }
+func NewString(s string) *string { return &s }
