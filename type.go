@@ -1,101 +1,36 @@
 package corto
 
-type Point2i [2]int32
-type Point3i [3]int32
-type Point2s [2]int16
-type Point3s [3]int16
-type Color4b [4]byte
-type Point3b [3]byte
+type PredictionType uint32
 
-func (p *Point2i) setMin(c Point2i) {
-	if c[0] < p[0] {
-		p[0] = c[0]
-	}
-	if c[1] < p[1] {
-		p[1] = c[1]
-	}
-}
-func (p *Point2i) setMax(c Point2i) {
-	if c[0] > p[0] {
-		p[0] = c[0]
-	}
-	if c[1] > p[1] {
-		p[1] = c[1]
-	}
-}
+const (
+	PREDICTION_DIFF      PredictionType = 0x0
+	PREDICTION_ESTIMATED PredictionType = 0x1
+	PREDICTION_BORDER    PredictionType = 0x2
+)
 
-func (p *Point3i) setMin(c Point3i) {
-	if c[0] < p[0] {
-		p[0] = c[0]
-	}
-	if c[1] < p[1] {
-		p[1] = c[1]
-	}
-	if c[2] < p[2] {
-		p[2] = c[2]
-	}
-}
-func (p *Point3i) setMax(c Point3i) {
-	if c[0] > p[0] {
-		p[0] = c[0]
-	}
-	if c[1] > p[1] {
-		p[1] = c[1]
-	}
-	if c[2] > p[2] {
-		p[2] = c[2]
-	}
-}
+type FormatType uint32
 
-func (p *Point2s) setMin(c Point2s) {
-	if c[0] < p[0] {
-		p[0] = c[0]
-	}
-	if c[1] < p[1] {
-		p[1] = c[1]
-	}
-}
-func (p *Point2s) setMax(c Point2s) {
-	if c[0] > p[0] {
-		p[0] = c[0]
-	}
-	if c[1] > p[1] {
-		p[1] = c[1]
-	}
-}
+const (
+	FORMAT_UINT32 FormatType = 0
+	FORMAT_INT32  FormatType = 1
+	FORMAT_UINT16 FormatType = 2
+	FORMAT_INT16  FormatType = 3
+	FORMAT_UINT8  FormatType = 4
+	FORMAT_INT8   FormatType = 5
+	FORMAT_FLOAT  FormatType = 6
+	FORMAT_DOUBLE FormatType = 7
+)
 
-func (p *Point3s) setMin(c Point3s) {
-	if c[0] < p[0] {
-		p[0] = c[0]
-	}
-	if c[1] < p[1] {
-		p[1] = c[1]
-	}
-	if c[2] < p[2] {
-		p[2] = c[2]
-	}
-}
-func (p *Point3s) setMax(c Point3s) {
-	if c[0] > p[0] {
-		p[0] = c[0]
-	}
-	if c[1] > p[1] {
-		p[1] = c[1]
-	}
-	if c[2] > p[2] {
-		p[2] = c[2]
-	}
-}
+type StrategyType uint32
 
-func (b *Color4b) toYCC() Color4b {
-	return Color4b{b[1], byte(b[2] - b[1]), byte(b[0] - b[1]), b[3]}
-}
+const (
+	PARALLEL   StrategyType = 0x1
+	CORRELATED StrategyType = 0x2
+)
 
-func (b *Color4b) toRGB() Color4b {
-	return Color4b{byte(b[2] + b[0]), b[0], byte(b[1] + b[0]), b[3]}
-}
+type EntropyType uint32
 
-func NewBool(b bool) *bool       { return &b }
-func NewInt(n int) *int          { return &n }
-func NewInt64(n int64) *int64    { return &n }
-func NewString(s string) *string { return &s }
+const (
+	ENTROPY_NONE     EntropyType = 0
+	ENTROPY_TUNSTALL EntropyType = 1
+)

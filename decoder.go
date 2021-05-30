@@ -1,30 +1,44 @@
 package corto
 
+/*
+#include "corto_api.h"
+#cgo CFLAGS: -I ./
+*/
+import "C"
+import "unsafe"
+
 type Decoder struct {
+	m *C.struct__corto_decoder_t
 }
 
 func NewDecoder(input []byte) *Decoder {
-	return nil
+	return &Decoder{m: C.corto_new_decoder(C.int(len(input)), (*C.uchar)((unsafe.Pointer)(&input[0])))}
+}
+
+func (e *Decoder) Free() {
+	if e.m != nil {
+		C.corto_decoder_free(e.m)
+	}
 }
 
 func (d *Decoder) hasAttr(name string) bool {
-	return ok
+	return false
 }
 
 func (d *Decoder) setPositions(buffer []float32) bool {
-	return d.setAttributeFormat("position", buffer, FORMAT_FLOAT)
+	return false
 }
 
 func (d *Decoder) setNormals(buffer []float32) bool {
-	return d.setAttributeFormat("normal", buffer, FORMAT_FLOAT)
+	return false
 }
 
 func (d *Decoder) setNormalsInt16(buffer []int16) bool {
-	return d.setAttributeFormat("normal", buffer, FORMAT_INT16)
+	return false
 }
 
 func (d *Decoder) setUvs(buffer []float32) bool {
-	return d.setAttributeFormat("uv", buffer, FORMAT_FLOAT)
+	return false
 }
 
 func (d *Decoder) setColors(buffer []byte, components int) bool {
@@ -35,16 +49,10 @@ func (d *Decoder) setAttributeFormat(name string, buffer interface{}, format For
 	return false
 }
 
-func (d *Decoder) setAttribute(name string, buffer interface{}, attr VertexAttribute) bool {
-	return false
-}
-
 func (d *Decoder) setIndexInt32(buffer []uint32) {
-	d.index.faces32 = buffer
 }
 
 func (d *Decoder) setIndexInt16(buffer []uint16) {
-	d.index.faces16 = buffer
 }
 
 func (d *Decoder) decode() {

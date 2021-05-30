@@ -1,14 +1,27 @@
 package corto
 
+/*
+#include "corto_api.h"
+#cgo CFLAGS: -I ./
+*/
+import "C"
+
 import (
 	"github.com/flywave/go3d/vec3"
 )
 
 type Encoder struct {
+	m *C.struct__corto_encoder_t
 }
 
 func NewEncoder(_nvert uint32, _nface uint32, entropy EntropyType) *Encoder {
-	return nil
+	return &Encoder{m: C.corto_new_encoder(C.uint(_nvert), C.uint(_nface), C.uint(entropy))}
+}
+
+func (e *Encoder) Free() {
+	if e.m != nil {
+		C.corto_encoder_free(e.m)
+	}
 }
 
 func (e *Encoder) addPositions(buffer []float32, q float32, o vec3.T) bool {
@@ -24,15 +37,15 @@ func (e *Encoder) addPositionsInt16(buffer []float32, _index []uint16, q float32
 }
 
 func (e *Encoder) addPositionsBits(buffer []float32, bits int) bool {
-	return e.addPositions(buffer, quantizationStep(int(e.nvert), buffer, bits), vec3.Zero)
+	return false
 }
 
 func (e *Encoder) addPositionsBitsInt32(buffer []float32, index []uint32, bits int) bool {
-	return e.addPositionsInt32(buffer, index, quantizationStep(int(e.nvert), buffer, bits), vec3.Zero)
+	return false
 }
 
 func (e *Encoder) addPositionsBitsInt16(buffer []float32, index []uint16, bits int) bool {
-	return e.addPositionsInt16(buffer, index, quantizationStep(int(e.nvert), buffer, bits), vec3.Zero)
+	return false
 }
 
 func (e *Encoder) addNormals(buffer []float32, bits int, no PredictionType) bool {
@@ -64,15 +77,10 @@ func (e *Encoder) addAttributeFormat(name string, buffer []byte, format FormatTy
 
 }
 
-func (e *Encoder) addAttribute(name string, buffer []byte, attr VertexAttribute) bool {
-
-	return true
-}
-
 func (e *Encoder) addGroup(end_triangle int) {
 }
 
-func (e *Encoder) addGroupAttr(end_triangle int, props map[string]string) {
+func (e *Encoder) addGroupProps(end_triangle int, props map[string]string) {
 }
 
 func (e *Encoder) encode() {
