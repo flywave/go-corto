@@ -21,51 +21,46 @@ func (e *Decoder) Free() {
 	}
 }
 
-func (d *Decoder) hasAttr(name string) bool {
-	return false
+func (d *Decoder) HasAttr(name string) bool {
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+	return bool(C.corto_encoder_has_attr(d.m, cname))
 }
 
-func (d *Decoder) setPositions(buffer []float32) bool {
-	return false
+func (d *Decoder) SetPositions(buffer []float32) bool {
+	return bool(C.corto_encoder_set_positions(d.m, (*C.float)(unsafe.Pointer(&buffer[0]))))
 }
 
-func (d *Decoder) setNormals(buffer []float32) bool {
-	return false
+func (d *Decoder) SetNormals(buffer []float32) bool {
+	return bool(C.corto_encoder_set_normals_float(d.m, (*C.float)(unsafe.Pointer(&buffer[0]))))
 }
 
-func (d *Decoder) setNormalsInt16(buffer []int16) bool {
-	return false
+func (d *Decoder) SetNormalsInt16(buffer []int16) bool {
+	return bool(C.corto_encoder_set_normals_short(d.m, (*C.short)(unsafe.Pointer(&buffer[0]))))
 }
 
-func (d *Decoder) setUvs(buffer []float32) bool {
-	return false
+func (d *Decoder) SetUvs(buffer []float32) bool {
+	return bool(C.corto_encoder_set_uvs(d.m, (*C.float)(unsafe.Pointer(&buffer[0]))))
 }
 
-func (d *Decoder) setColors(buffer []byte, components int) bool {
-	return false
+func (d *Decoder) SetColors(buffer []byte, components int) bool {
+	return bool(C.corto_encoder_set_colors(d.m, (*C.uchar)(unsafe.Pointer(&buffer[0])), C.int(components)))
 }
 
-func (d *Decoder) setAttributeFormat(name string, buffer interface{}, format FormatType) bool {
-	return false
+func (d *Decoder) SetAttributeFormat(name string, buffer []byte, format FormatType) bool {
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+	return bool(C.corto_encoder_set_attribute(d.m, cname, (*C.char)(unsafe.Pointer(&buffer[0])), C.uint(format)))
 }
 
-func (d *Decoder) setIndexInt32(buffer []uint32) {
+func (d *Decoder) SetIndexInt32(buffer []uint32) {
+	C.corto_encoder_set_index32(d.m, (*C.uint)(unsafe.Pointer(&buffer[0])))
 }
 
-func (d *Decoder) setIndexInt16(buffer []uint16) {
+func (d *Decoder) SetIndexInt16(buffer []uint16) {
+	C.corto_encoder_set_index16(d.m, (*C.ushort)(unsafe.Pointer(&buffer[0])))
 }
 
-func (d *Decoder) decode() {
-
-}
-
-func (d *Decoder) decodePointCloud() {
-}
-
-func (d *Decoder) decodeMesh() {
-
-}
-
-func (d *Decoder) decodeFaces(start, end uint32) uint32 {
-	return 0
+func (d *Decoder) Decode() {
+	C.corto_encoder_decode(d.m)
 }

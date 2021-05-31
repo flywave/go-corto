@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,7 +77,9 @@ FLYWAVE_CORTO_API void
 corto_encoder_add_group_props(corto_encoder_t *enc, int end_triangle,
                               char **props_keys, char **props_values, int len);
 
-FLYWAVE_CORTO_API void corto_encoder_encode(corto_encoder_t *enc);
+FLYWAVE_CORTO_API size_t corto_encoder_encode(corto_encoder_t *enc);
+
+FLYWAVE_CORTO_API void corto_encoder_get_data(corto_encoder_t *enc, char *data, size_t len);
 
 typedef struct _corto_decoder_t corto_decoder_t;
 

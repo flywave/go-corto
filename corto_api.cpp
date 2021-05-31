@@ -127,7 +127,14 @@ void corto_encoder_add_group_props(corto_encoder_t *enc, int end_triangle,
   enc->ptr->addGroup(end_triangle, props);
 }
 
-void corto_encoder_encode(corto_encoder_t *enc) { enc->ptr->encode(); }
+size_t corto_encoder_encode(corto_encoder_t *enc) { 
+  enc->ptr->encode();
+  return enc->ptr->stream.size();  
+}
+
+void corto_encoder_get_data(corto_encoder_t *enc, char *data, size_t len) {
+  memcpy(data, enc->ptr->stream.data(), len);
+}
 
 struct _corto_decoder_t {
   std::shared_ptr<crt::Decoder> ptr;
