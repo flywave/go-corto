@@ -63,7 +63,7 @@ func (e *Encoder) AddNormals(buffer []float32, bits int, no PredictionType) bool
 	return bool(C.corto_encoder_add_normals_float(e.m, (*C.float)(unsafe.Pointer(&buffer[0])), C.int(bits), C.uint(no)))
 }
 
-func (e *Encoder) AddNormalsInt16(buffer []uint16, bits int, no PredictionType) bool {
+func (e *Encoder) AddNormalsInt16(buffer []int16, bits int, no PredictionType) bool {
 	return bool(C.corto_encoder_add_normals_short(e.m, (*C.short)(unsafe.Pointer(&buffer[0])), C.int(bits), C.uint(no)))
 }
 

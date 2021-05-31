@@ -14,14 +14,16 @@ type DecoderContext struct {
 	NVert            uint32
 	ColorsComponents uint32
 	Index16          bool
+	Normal16         bool
 }
 
-func NewDecoderContext(nface, nvert, colors int, index16 bool) *DecoderContext {
-	return &DecoderContext{NFace: uint32(nface), NVert: uint32(nvert), ColorsComponents: uint32(colors), Index16: index16}
+func NewDecoderContext(nface, nvert, colors int, index16, normal16 bool) *DecoderContext {
+	return &DecoderContext{NFace: uint32(nface), NVert: uint32(nvert), ColorsComponents: uint32(colors), Index16: index16, Normal16: normal16}
 }
 
 type Face [3]uint32
 type Face16 [3]uint16
+type Normal16 [3]int16
 
 type Color [3]byte
 type Color3 [3]byte
@@ -45,6 +47,7 @@ type Geom struct {
 	Indices   []Face
 	Indices16 []Face16
 	Normals   []vec3.T
+	Normals16 []Normal16
 	Colors    []Color
 	Colors3   []Color3
 	TexCoord  []vec2.T
@@ -96,6 +99,30 @@ func (m *Geom) GetNormalsPlane() []float32 {
 	floatHeader.Data = uintptr(unsafe.Pointer(&m.Normals[0]))
 
 	return floatSlice
+}
+
+func (m *Geom) MakeNormals16Plane(nvert int) []int16 {
+	m.Normals16 = make([]Normal16, nvert)
+
+	var int16Slice []int16
+	int16Header := (*reflect.SliceHeader)((unsafe.Pointer(&int16Slice)))
+	int16Header.Cap = int(nvert * 3)
+	int16Header.Len = int(nvert * 3)
+	int16Header.Data = uintptr(unsafe.Pointer(&m.Normals16[0]))
+
+	return int16Slice
+}
+
+func (m *Geom) GetNormals16Plane() []int16 {
+	nvert := len(m.Normals16)
+
+	var int16Slice []int16
+	int16Header := (*reflect.SliceHeader)((unsafe.Pointer(&int16Slice)))
+	int16Header.Cap = int(nvert * 3)
+	int16Header.Len = int(nvert * 3)
+	int16Header.Data = uintptr(unsafe.Pointer(&m.Normals16[0]))
+
+	return int16Slice
 }
 
 func (m *Geom) MakeColors3Plane(nvert int) []byte {
@@ -234,6 +261,10 @@ func (m *Geom) HasNormal() bool {
 	return len(m.Normals) > 0
 }
 
+func (m *Geom) HasNormal16() bool {
+	return len(m.Normals16) > 0
+}
+
 func (m *Geom) HasColor() bool {
 	return len(m.Colors) > 0
 }
@@ -258,7 +289,11 @@ func DecodeGeom(ctx *DecoderContext, input []byte) *Geom {
 	dec.SetPositions(geom.MakeVerticesPlane(int(nvert)))
 
 	if dec.HasAttr("normal") {
-		dec.SetNormals(geom.MakeNormalsPlane(int(nvert)))
+		if ctx.Normal16 {
+			dec.SetNormalsInt16(geom.MakeNormals16Plane(int(nvert)))
+		} else {
+			dec.SetNormals(geom.MakeNormalsPlane(int(nvert)))
+		}
 	}
 
 	if dec.HasAttr("color") {
@@ -324,6 +359,12 @@ func EncodeGeom(ctx *EncoderContext, geom *Geom) []byte {
 			enc.AddNormals(geom.GetNormalsPlane(), ctx.NormBits, PREDICTION_ESTIMATED)
 		} else {
 			enc.AddNormals(geom.GetNormalsPlane(), ctx.NormBits, PREDICTION_DIFF)
+		}
+	} else if geom.HasNormal16() {
+		if geom.HasFace() {
+			enc.AddNormalsInt16(geom.GetNormals16Plane(), ctx.NormBits, PREDICTION_ESTIMATED)
+		} else {
+			enc.AddNormalsInt16(geom.GetNormals16Plane(), ctx.NormBits, PREDICTION_DIFF)
 		}
 	}
 
