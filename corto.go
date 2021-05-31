@@ -25,7 +25,7 @@ type Face [3]uint32
 type Face16 [3]uint16
 type Normal16 [3]int16
 
-type Color [3]byte
+type Color [4]byte
 type Color3 [3]byte
 
 type EncoderContext struct {
