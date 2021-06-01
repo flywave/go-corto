@@ -78,7 +78,7 @@ func (m *Geom) GetVerticesPlane() []float32 {
 }
 
 func (m *Geom) MakeNormalsPlane(nvert int) []float32 {
-	m.Vertices = make([]vec3.T, nvert)
+	m.Normals = make([]vec3.T, nvert)
 
 	var floatSlice []float32
 	floatHeader := (*reflect.SliceHeader)((unsafe.Pointer(&floatSlice)))
@@ -156,7 +156,7 @@ func (m *Geom) MakeColorsPlane(nvert int) []byte {
 	byteHeader := (*reflect.SliceHeader)((unsafe.Pointer(&byteSlice)))
 	byteHeader.Cap = int(nvert * 4)
 	byteHeader.Len = int(nvert * 4)
-	byteHeader.Data = uintptr(unsafe.Pointer(&m.Colors3[0]))
+	byteHeader.Data = uintptr(unsafe.Pointer(&m.Colors[0]))
 
 	return byteSlice
 }
@@ -168,7 +168,7 @@ func (m *Geom) GetColorsPlane() []byte {
 	byteHeader := (*reflect.SliceHeader)((unsafe.Pointer(&byteSlice)))
 	byteHeader.Cap = int(nvert * 4)
 	byteHeader.Len = int(nvert * 4)
-	byteHeader.Data = uintptr(unsafe.Pointer(&m.Colors3[0]))
+	byteHeader.Data = uintptr(unsafe.Pointer(&m.Colors[0]))
 
 	return byteSlice
 }
@@ -192,7 +192,7 @@ func (m *Geom) GetTexCoordPlane() []float32 {
 	floatHeader := (*reflect.SliceHeader)((unsafe.Pointer(&floatSlice)))
 	floatHeader.Cap = int(nvert * 2)
 	floatHeader.Len = int(nvert * 2)
-	floatHeader.Data = uintptr(unsafe.Pointer(&m.Colors3[0]))
+	floatHeader.Data = uintptr(unsafe.Pointer(&m.TexCoord[0]))
 
 	return floatSlice
 }
@@ -240,7 +240,7 @@ func (m *Geom) GetIndex32Plane() []uint32 {
 	uint32Header := (*reflect.SliceHeader)((unsafe.Pointer(&uint32Slice)))
 	uint32Header.Cap = int(nface * 3)
 	uint32Header.Len = int(nface * 3)
-	uint32Header.Data = uintptr(unsafe.Pointer(&m.Indices16[0]))
+	uint32Header.Data = uintptr(unsafe.Pointer(&m.Indices[0]))
 
 	return uint32Slice
 }
