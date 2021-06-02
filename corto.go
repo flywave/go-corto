@@ -322,6 +322,9 @@ func DecodeGeom(ctx *DecoderContext, input []byte) *Geom {
 func EncodeGeom(ctx *EncoderContext, geom *Geom) []byte {
 	nvert := uint32(len(geom.Vertices))
 	nface := uint32(len(geom.Indices))
+	if geom.HasFace16() {
+		nface = uint32(len(geom.Indices16))
+	}
 
 	enc := NewEncoder(nvert, nface, ctx.Entropy)
 	defer enc.Free()
@@ -332,7 +335,7 @@ func EncodeGeom(ctx *EncoderContext, geom *Geom) []byte {
 		}
 	}
 
-	if geom.HasFace() {
+	if geom.HasFace() || geom.HasFace16() {
 		if geom.HasFace16() {
 			if ctx.VertexBits > 0 {
 				enc.AddPositionsBitsInt16(geom.GetVerticesPlane(), geom.GetIndex16Plane(), ctx.VertexBits)
