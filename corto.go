@@ -37,7 +37,7 @@ type EncoderContext struct {
 	UvBits     float32
 }
 
-func NewEncoderContext(coordQ int) *EncoderContext {
+func NewEncoderContext(coordQ float32) *EncoderContext {
 	return &EncoderContext{Entropy: ENTROPY_TUNSTALL, VertexQ: float32(math.Pow(2, float64(coordQ))), VertexBits: 0, NormBits: 10, ColorBits: [4]int{6, 7, 6, 5}, UvBits: 12}
 }
 
